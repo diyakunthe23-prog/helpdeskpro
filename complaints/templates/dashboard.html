@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Complaint Service</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- FONTS -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Quicksand:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+/*  FAIRY BACKGROUND */
+body{
+background: linear-gradient(135deg,#fdf2f8,#f0f9ff,#ecfeff);
+font-family:'Quicksand',sans-serif;
+color:#4b5563;
+
+min-height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/*  SPARKLE EFFECT */
+body::before{
+content:"";
+position:fixed;
+width:100%;
+height:100%;
+background: radial-gradient(circle, rgba(255,182,193,0.2), transparent 70%);
+pointer-events:none;
+}
+
+/* HEADINGS */
+h1,h2,h3,h4,h5{
+font-family:'Playfair Display',serif;
+color:#7c3aed;
+}
+
+/* NAVBAR */
+.navbar{
+background: rgba(255,255,255,0.6)!important;
+backdrop-filter: blur(10px);
+border-bottom:1px solid rgba(0,0,0,0.05);
+}
+
+/* CARDS */
+.card{
+background: rgba(255,255,255,0.7);
+border:none;
+border-radius:16px;
+box-shadow:0 10px 25px rgba(255,182,193,0.2);
+}
+
+/* STATS COLORS */
+.bg-warning{background:linear-gradient(135deg,#fde68a,#fca5a5)!important;color:#7c2d12;}
+.bg-primary{background:linear-gradient(135deg,#c4b5fd,#93c5fd)!important;}
+.bg-success{background:linear-gradient(135deg,#bbf7d0,#86efac)!important;color:#065f46;}
+
+/* INPUT */
+input.form-control{
+border-radius:10px;
+}
+
+/* BUTTON */
+.btn-dark{
+background:#a78bfa;
+border:none;
+}
+.btn-dark:hover{
+background:#8b5cf6;
+}
+
+/* TABLE */
+.table{
+border-collapse:separate;
+border-spacing:0 8px;
+}
+
+.table thead{
+background:#f9fafb;
+}
+
+.table thead th{
+color:#6d28d9;
+font-weight:600;
+}
+
+.table tbody tr{
+background:white;
+border-radius:12px;
+transition:0.2s;
+}
+
+.table tbody tr:hover{
+background:#fdf4ff;
+}
+
+/* BADGES */
+.badge{
+padding:6px 12px;
+border-radius:20px;
+}
+
+/* BUTTONS */
+.btn-outline-primary{
+border-color:#a78bfa;
+color:#7c3aed;
+}
+.btn-outline-primary:hover{
+background:#a78bfa;
+color:white;
+}
+
+.btn-outline-danger{
+border-color:#fca5a5;
+color:#dc2626;
+}
+.btn-outline-danger:hover{
+background:#fca5a5;
+color:white;
+}
+
+/* NAV BUTTONS */
+.btn-submit{
+background:#fbcfe8;
+color:#be185d;
+}
+.btn-track{
+background:#bfdbfe;
+color:#1d4ed8;
+}
+.btn-logout{
+background:#fecaca;
+color:#b91c1c;
+}
+
+/* FOOTER */
+footer{
+background:#fdf2f8;
+border-top:1px solid #fbcfe8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+<div class="container-fluid">
+
+<a class="navbar-brand fw-bold text-purple">✨ Complaint Service</a>
+
+<div>
+<a class="btn btn-light me-2" href="/">Dashboard</a>
+<a class="btn btn-submit me-2" href="/submit/">Submit</a>
+<a class="btn btn-track me-2" href="/track/">Track</a>
+
+<form action="/logout/" method="POST" style="display:inline;">
+{% csrf_token %}
+<button class="btn btn-logout">Logout</button>
+</form>
+</div>
+
+</div>
+</nav>
+
+<div class="container mt-5 flex-grow-1">
+
+<h3 class="mb-3">Welcome, {{ request.user.username }} 🌸</h3>
+<h2 class="mb-4">Complaint Dashboard</h2>
+
+<!-- STATS -->
+<div class="row mb-4">
+
+<div class="col-md-4">
+<a href="/pending/" style="text-decoration:none">
+<div class="card bg-warning p-3">
+<h5>Pending</h5>
+<h3>{{ pending }}</h3>
+</div>
+</a>
+</div>
+
+<div class="col-md-4">
+<a href="/progress/" style="text-decoration:none">
+<div class="card bg-primary p-3 text-white">
+<h5>In Progress</h5>
+<h3>{{ in_progress }}</h3>
+</div>
+</a>
+</div>
+
+<div class="col-md-4">
+<a href="/resolved/" style="text-decoration:none">
+<div class="card bg-success p-3">
+<h5>Resolved</h5>
+<h3>{{ resolved }}</h3>
+</div>
+</a>
+</div>
+
+</div>
+
+<!--  DOUGHNUT (UNCHANGED LOGIC) -->
+<div class="card text-center p-4 mb-4">
+<h5 class="mb-3">Complaint Analytics</h5>
+<div style="width:260px;margin:auto;">
+<canvas id="complaintChart"></canvas>
+</div>
+</div>
+
+<!-- SEARCH -->
+<div class="row mb-3">
+<div class="col-md-6">
+<form method="GET" class="d-flex">
+<input type="text" name="search" class="form-control me-2" placeholder="Search complaint...">
+<button class="btn btn-dark">Search</button>
+</form>
+</div>
+</div>
+
+<h5 class="mb-3">Complaint List</h5>
+
+<!-- TABLE -->
+<div class="card p-3">
+
+<div class="table-responsive">
+<table class="table align-middle">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Description</th>
+<th>Status</th>
+<th>User</th>
+<th>Date</th>
+<th class="text-center">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+{% for complaint in complaints %}
+<tr>
+
+<td>{{ complaint.id }}</td>
+<td>{{ complaint.title }}</td>
+<td>{{ complaint.description }}</td>
+
+<td>
+{% if complaint.status == "Pending" %}
+<span class="badge bg-warning text-dark">Pending</span>
+{% elif complaint.status == "In Progress" %}
+<span class="badge bg-primary">In Progress</span>
+{% elif complaint.status == "Resolved" %}
+<span class="badge bg-success">Resolved</span>
+{% endif %}
+</td>
+
+<td>{{ complaint.created_by.username }}</td>
+<td>{{ complaint.created_at }}</td>
+
+<td class="text-center">
+
+{% if complaint.status != "Resolved" %}
+<a href="/update/{{ complaint.id }}/" class="btn btn-sm btn-outline-primary me-1">Update</a>
+{% endif %}
+
+<a href="/delete/{{ complaint.id }}/" class="btn btn-sm btn-outline-danger me-1">Delete</a>
+
+<a href="/download/{{ complaint.id }}/" class="btn btn-sm btn-outline-success me-1">Download</a>
+
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="mt-4 d-flex justify-content-center">
+
+<nav>
+<ul class="pagination">
+
+{% if complaints.has_previous %}
+<li class="page-item">
+<a class="page-link" href="?page={{ complaints.previous_page_number }}">Previous</a>
+</li>
+{% endif %}
+
+{% for num in complaints.paginator.page_range %}
+<li class="page-item {% if complaints.number == num %}active{% endif %}">
+<a class="page-link" href="?page={{ num }}">{{ num }}</a>
+</li>
+{% endfor %}
+
+{% if complaints.has_next %}
+<li class="page-item">
+<a class="page-link" href="?page={{ complaints.next_page_number }}">Next</a>
+</li>
+{% endif %}
+
+</ul>
+</nav>
+
+</div>
+
+<!--  DOUGHNUT JS (KEEP SAME) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+new Chart(document.getElementById("complaintChart"),{
+type:"doughnut",
+data:{
+labels:["Pending","In Progress","Resolved"],
+datasets:[{
+data:[
+Number("{{ pending|default:0 }}"),
+Number("{{ in_progress|default:0 }}"),
+Number("{{ resolved|default:0 }}")
+],
+backgroundColor:["#fde68a","#c4b5fd","#86efac"],
+borderWidth:0
+}]
+},
+options:{
+cutout:"65%"
+}
+});
+</script>
+
+<footer class="text-center mt-5 p-3">
+Complaint Service © 2026 | Complaint Management System
+</footer>
+
+</body>
+</html>

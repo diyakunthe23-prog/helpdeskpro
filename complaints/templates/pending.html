@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Pending Complaints</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- FONTS -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Quicksand:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+/*  BACKGROUND */
+body{
+background: linear-gradient(135deg,#fdf2f8,#f0f9ff,#ecfeff);
+font-family:'Quicksand',sans-serif;
+color:#4b5563;
+
+min-height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/* GLOW */
+body::before{
+content:"";
+position:fixed;
+width:100%;
+height:100%;
+background: radial-gradient(circle, rgba(255,182,193,0.25), transparent 70%);
+pointer-events:none;
+}
+
+/* HEADINGS */
+h1,h2,h3{
+font-family:'Playfair Display',serif;
+color:#7c3aed;
+}
+
+/* NAVBAR */
+.navbar{
+background: rgba(255,255,255,0.7)!important;
+backdrop-filter: blur(10px);
+border-bottom:1px solid rgba(0,0,0,0.05);
+}
+
+/* CARD */
+.card{
+background: rgba(255,255,255,0.8);
+border:none;
+border-radius:16px;
+box-shadow:0 10px 25px rgba(255,182,193,0.2);
+}
+
+/* TABLE */
+.table{
+border-collapse:separate;
+border-spacing:0 8px;
+}
+
+.table thead{
+background:#f9fafb;
+}
+
+.table thead th{
+color:#6d28d9;
+font-weight:600;
+}
+
+.table tbody tr{
+background:white;
+border-radius:12px;
+transition:0.2s;
+}
+
+.table tbody tr:hover{
+background:#fdf4ff;
+}
+
+/* BADGE */
+.badge{
+padding:6px 12px;
+border-radius:20px;
+background:#fde68a;
+color:#78350f;
+}
+
+/* BUTTONS */
+.btn-outline-primary{
+border-color:#a78bfa;
+color:#7c3aed;
+}
+.btn-outline-primary:hover{
+background:#a78bfa;
+color:white;
+}
+
+.btn-outline-danger{
+border-color:#fca5a5;
+color:#dc2626;
+}
+.btn-outline-danger:hover{
+background:#fca5a5;
+color:white;
+}
+
+.btn-outline-success{
+border-color:#86efac;
+color:#065f46;
+}
+.btn-outline-success:hover{
+background:#86efac;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+<div class="container-fluid">
+
+<a class="navbar-brand fw-bold">Complaint Service</a>
+
+<div>
+<a href="/" class="btn btn-light">Dashboard</a>
+</div>
+
+</div>
+</nav>
+
+<div class="container mt-5 flex-grow-1">
+
+<div class="card p-4">
+
+<h3 class="mb-4 text-center">Pending Complaints</h3>
+
+<div class="table-responsive">
+
+<table class="table align-middle">
+
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>Description</th>
+<th>Status</th>
+<th>User</th>
+<th>Date</th>
+<th class="text-center">Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for complaint in complaints %}
+
+<tr>
+
+<td>{{ complaint.id }}</td>
+
+<td>{{ complaint.title }}</td>
+
+<td>{{ complaint.description }}</td>
+
+<td>
+<span class="badge">
+{{ complaint.status }}
+</span>
+</td>
+
+<td>{{ complaint.created_by.username }}</td>
+
+<td>{{ complaint.created_at }}</td>
+
+<td class="text-center">
+
+<a href="/update/{{ complaint.id }}/" class="btn btn-sm btn-outline-primary me-1">
+Update
+</a>
+
+<a href="/delete/{{ complaint.id }}/"
+   class="btn btn-outline-danger btn-sm"
+   onclick="return confirm('Are you sure you want to delete this complaint?');">
+Delete
+</a>
+
+<a href="/download/{{ complaint.id }}/" class="btn btn-sm btn-outline-success">
+Download
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<footer class="text-center mt-5 p-3">
+Complaint Service © 2026 | Complaint Management System
+</footer>
+
+</body>
+</html>

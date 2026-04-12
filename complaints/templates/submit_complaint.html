@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Submit Complaint - Complaint Service</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- FONTS -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Quicksand:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+
+/* 🌸 BACKGROUND */
+body{
+background: linear-gradient(135deg,#fdf2f8,#f0f9ff,#ecfeff);
+font-family:'Quicksand',sans-serif;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+/* ✨ GLOW */
+body::before{
+content:"";
+position:fixed;
+width:100%;
+height:100%;
+background: radial-gradient(circle, rgba(251,207,232,0.25), transparent 70%);
+pointer-events:none;
+}
+
+/* NAVBAR */
+.navbar{
+background: rgba(255,255,255,0.7)!important;
+backdrop-filter: blur(10px);
+}
+
+/* CARD */
+.card{
+background: rgba(255,255,255,0.9);
+border:none;
+border-radius:18px;
+box-shadow:0 15px 35px rgba(251,207,232,0.3);
+}
+
+/* HEADINGS */
+h3{
+font-family:'Playfair Display',serif;
+color:#7c3aed;
+}
+
+/* FORM INPUT FIX */
+.form-control, .form-select{
+border-radius:10px !important;
+border:1px solid #e5e7eb;
+}
+
+.form-control:focus, .form-select:focus{
+border-color:#a78bfa;
+box-shadow:0 0 0 2px rgba(167,139,250,0.2);
+}
+
+/* BUTTON */
+.btn-submit{
+background:linear-gradient(135deg,#c4b5fd,#fbcfe8);
+border:none;
+color:#4c1d95;
+border-radius:10px;
+}
+
+.btn-submit:hover{
+transform:translateY(-2px);
+box-shadow:0 10px 20px rgba(167,139,250,0.3);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar px-3">
+<a class="navbar-brand fw-bold">✨ Complaint Service</a>
+
+<div>
+<a href="/" class="btn btn-light">Dashboard</a>
+<a href="/track/" class="btn btn-light">Track</a>
+<a href="/logout/" class="btn btn-danger">Logout</a>
+</div>
+</nav>
+
+<div class="container mt-5 flex-grow-1">
+
+<div class="row justify-content-center">
+
+<div class="col-md-6">
+
+<div class="card p-4">
+
+<h3 class="text-center mb-4">Submit New Complaint</h3>
+
+<form method="POST">
+{% csrf_token %}
+
+<div class="mb-3">
+<label class="mb-1">Title</label>
+{{ form.title }}
+</div>
+
+<div class="mb-3">
+<label class="mb-1">Description</label>
+{{ form.description }}
+</div>
+
+<div class="mb-3">
+<label class="mb-1">Status</label>
+{{ form.status }}
+</div>
+
+<button type="submit" class="btn btn-submit w-100">✨ Submit Complaint</button>
+
+<a href="/" class="btn btn-outline-secondary w-100 mt-2">Back</a>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<footer class="text-center mt-5 p-3">
+Complaint Service © 2026 | Complaint Management System
+</footer>
+
+</body>
+</html>
