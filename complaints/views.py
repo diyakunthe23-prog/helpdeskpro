@@ -1,36 +1,51 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Complaint
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import HttpResponse
+from django.core.paginator import Paginator
+
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from datetime import datetime
 
-# ================= DASHBOARD =================
-from django.core.paginator import Paginator
+from .models import Complaint
 
+
+# ================= DASHBOARD =================
 @login_required
 def dashboard(request):
 
-    complaints_list = Complaint.objects.all().order_by('-id')
+    complaints_list = Complaint.objects.filter(
+        created_by=request.user
+    ).order_by('-id')
 
     # SEARCH
     search = request.GET.get('search')
     if search:
         complaints_list = complaints_list.filter(title__icontains=search)
 
-    # ✅ PAGINATION
-    paginator = Paginator(complaints_list, 5)   # 5 per page
+    # PAGINATION
+    paginator = Paginator(complaints_list, 5)
     page_number = request.GET.get('page')
     complaints = paginator.get_page(page_number)
 
-    # COUNTS
-    pending = Complaint.objects.filter(status="Pending").count()
-    in_progress = Complaint.objects.filter(status="In Progress").count()
-    resolved = Complaint.objects.filter(status="Resolved").count()
+    # COUNTS (user-specific)
+    pending = Complaint.objects.filter(
+        created_by=request.user,
+        status="Pending"
+    ).count()
+
+    in_progress = Complaint.objects.filter(
+        created_by=request.user,
+        status="In Progress"
+    ).count()
+
+    resolved = Complaint.objects.filter(
+        created_by=request.user,
+        status="Resolved"
+    ).count()
 
     return render(request, 'dashboard.html', {
         'complaints': complaints,
@@ -39,11 +54,11 @@ def dashboard(request):
         'resolved': resolved
     })
 
+
 # ================= AUTH =================
 def user_login(request):
 
     if request.method == "POST":
-
         username = request.POST.get("username")
         password = request.POST.get("password")
 
@@ -69,12 +84,13 @@ def register(request):
         )
         return redirect("login")
 
-    return render(request,"register.html")
+    return render(request, "register.html")
 
 
 def user_logout(request):
     logout(request)
     return redirect("login")
+
 
 # ================= COMPLAINT =================
 @login_required
@@ -84,7 +100,8 @@ def submit_complaint(request):
         Complaint.objects.create(
             title=request.POST.get('title'),
             description=request.POST.get('description'),
-            created_by=request.user
+            created_by=request.user,
+            status="Pending"
         )
         return redirect("dashboard")
 
@@ -93,14 +110,15 @@ def submit_complaint(request):
 
 @login_required
 def delete_complaint(request, id):
-    Complaint.objects.get(id=id).delete()
+    complaint = get_object_or_404(Complaint, id=id, created_by=request.user)
+    complaint.delete()
     return redirect("dashboard")
 
 
 @login_required
 def update_status(request, id):
 
-    complaint = Complaint.objects.get(id=id)
+    complaint = get_object_or_404(Complaint, id=id, created_by=request.user)
 
     if complaint.status == "Pending":
         complaint.status = "In Progress"
@@ -110,6 +128,7 @@ def update_status(request, id):
     complaint.save()
     return redirect("dashboard")
 
+
 # ================= TRACK =================
 @login_required
 def track_complaint(request):
@@ -118,31 +137,49 @@ def track_complaint(request):
 
     if request.method == "POST":
         try:
-            complaint = Complaint.objects.get(id=request.POST.get("complaint_id"))
-        except:
-            pass
+            complaint = Complaint.objects.get(
+                id=request.POST.get("complaint_id"),
+                created_by=request.user
+            )
+        except Complaint.DoesNotExist:
+            complaint = None
 
     return render(request, "track.html", {"complaint": complaint})
 
-# ================= FILTER PAGES =================
 
+# ================= FILTER PAGES =================
+@login_required
 def pending_list(request):
-    complaints = Complaint.objects.filter(status="Pending")
+    complaints = Complaint.objects.filter(
+        created_by=request.user,
+        status="Pending"
+    )
     return render(request, "pending.html", {"complaints": complaints})
 
+
+@login_required
 def progress_list(request):
-    complaints = Complaint.objects.filter(status="In Progress")
+    complaints = Complaint.objects.filter(
+        created_by=request.user,
+        status="In Progress"
+    )
     return render(request, "progress.html", {"complaints": complaints})
 
+
+@login_required
 def resolved_list(request):
-    complaints = Complaint.objects.filter(status="Resolved")
+    complaints = Complaint.objects.filter(
+        created_by=request.user,
+        status="Resolved"
+    )
     return render(request, "resolved.html", {"complaints": complaints})
 
-# ================= PDF =================
+
+# ================= PDF DOWNLOAD =================
 @login_required
 def download_report(request, id):
 
-    complaint = Complaint.objects.get(id=id)
+    complaint = get_object_or_404(Complaint, id=id, created_by=request.user)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="complaint_{id}.pdf"'
@@ -157,33 +194,4 @@ def download_report(request, id):
     p.drawString(100, 630, f"Date: {datetime.now()}")
 
     p.save()
-
     return response
-
-
-# FILTERS
-@login_required
-def pending_list(request):
-    complaints = Complaint.objects.filter(status="Pending", created_by=request.user)
-    return render(request, "pending.html", {"complaints": complaints})
-
-@login_required
-def progress_list(request):
-    complaints = Complaint.objects.filter(
-        status__icontains="progress"
-    )
-    return render(request, "progress.html", {"complaints": complaints})
-
-
-from django.db.models import Q
-
-@login_required
-def resolved_list(request):
-
-    complaints = Complaint.objects.filter(
-        status__iexact="Resolved"
-    )
-
-    return render(request, "resolved.html", {"complaints": complaints})
-
-    
